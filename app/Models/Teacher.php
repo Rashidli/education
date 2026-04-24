@@ -39,6 +39,11 @@ class Teacher extends Model
         return $this->hasManyThrough(Enrollment::class, Group::class);
     }
 
+    public function payouts(): HasMany
+    {
+        return $this->hasMany(TeacherPayout::class);
+    }
+
     public function typeLabel(): string
     {
         return $this->type === self::TYPE_LOCAL ? 'Yerli' : 'Xarici';

@@ -7,11 +7,15 @@ use App\Http\Requests\UpdateTeacherRequest;
 use App\Models\Teacher;
 use App\Services\EarningsService;
 use App\Services\SettingsService;
+use App\Services\TeacherPayoutService;
 use Illuminate\Http\Request;
 
 class TeacherController extends Controller
 {
-    public function __construct(private EarningsService $earnings) {}
+    public function __construct(
+        private EarningsService $earnings,
+        private TeacherPayoutService $payouts,
+    ) {}
 
     public function index(Request $request)
     {
@@ -75,6 +79,7 @@ class TeacherController extends Controller
                 now()->startOfMonth(),
                 now()->endOfMonth(),
             ),
+            'balance' => $this->payouts->balance($teacher),
         ]);
     }
 

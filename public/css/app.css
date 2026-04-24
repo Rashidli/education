@@ -970,6 +970,65 @@ h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.2; }
 }
 
 /* ============================================
+   Ledger (balance grid)
+   ============================================ */
+.ledger-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+}
+
+.ledger-cell {
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 2px);
+  padding: 0.625rem 0.75rem;
+  background-color: var(--background);
+  position: relative;
+}
+.ledger-cell__month {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+.ledger-cell__expected { font-size: 0.75rem; color: var(--muted-foreground); margin-top: 2px; }
+.ledger-cell__paid { font-size: 0.9375rem; font-weight: 600; margin-top: 4px; }
+.ledger-cell__status {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 8px; height: 8px; border-radius: 999px;
+}
+
+.ledger-cell--paid { border-color: #bbf7d0; background-color: #f0fdf4; }
+.ledger-cell--paid .ledger-cell__status { background-color: var(--success); }
+.ledger-cell--partial { border-color: #fde68a; background-color: #fffbeb; }
+.ledger-cell--partial .ledger-cell__status { background-color: var(--warning); }
+.ledger-cell--unpaid { border-color: #fecaca; background-color: #fef2f2; }
+.ledger-cell--unpaid .ledger-cell__status { background-color: var(--destructive); }
+.ledger-cell--upcoming { opacity: 0.6; border-style: dashed; }
+
+.balance-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background-color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.balance-bar__item { text-align: center; }
+.balance-bar__label { font-size: 0.6875rem; text-transform: uppercase; color: var(--muted-foreground); letter-spacing: 0.05em; }
+.balance-bar__value { font-size: 1.125rem; font-weight: 700; margin-top: 2px; }
+.balance-bar__value--owes { color: var(--destructive); }
+.balance-bar__value--credit { color: var(--success); }
+
+@media (max-width: 540px) {
+  .balance-bar { grid-template-columns: 1fr; }
+}
+
+/* ============================================
    Utility
    ============================================ */
 .flex { display: flex; }

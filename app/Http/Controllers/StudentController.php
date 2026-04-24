@@ -6,10 +6,13 @@ use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Group;
 use App\Models\Student;
+use App\Services\StudentLedgerService;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
 {
+    public function __construct(private StudentLedgerService $ledger) {}
+
     public function index(Request $request)
     {
         $query = Student::query()
@@ -58,6 +61,10 @@ class StudentController extends Controller
             'enrollments.payments' => fn ($q) => $q->latest(),
         ]);
 
+        $ledgers = $student->enrollments->mapWithKeys(
+            fn ($e) => [$e->id => $this->ledger->forEnrollment($e)]
+        );
+
         return view('students.show', [
             'student' => $student,
             'availableGroups' => Group::where('is_active', true)
@@ -66,6 +73,10 @@ class StudentController extends Controller
                 ->latest()
                 ->get(),
             'hasAnyActiveGroups' => Group::where('is_active', true)->exists(),
+            'ledgers' => $ledgers,
+            'totalBalance' => round((float) $ledgers->sum('balance'), 2),
+            'totalExpected' => round((float) $ledgers->sum('total_expected'), 2),
+            'totalPaid' => round((float) $ledgers->sum('total_paid'), 2),
         ]);
     }
 

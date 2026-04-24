@@ -31,10 +31,9 @@ class DashboardController extends Controller
             'upcomingPayments' => $this->dashboard->upcomingPayments(),
             'overdueCount' => $this->dashboard->overdueEnrollments()->count(),
             'topGroups' => $this->dashboard->topGroups(5),
-            'teacherSummary' => $this->earnings->summaryByTeacher(
-                $now->copy()->startOfMonth(),
-                $now->copy()->endOfMonth(),
-            ),
+            'teacherBalances' => $this->dashboard->teacherBalances(),
+            'totalStudentDebt' => $this->dashboard->totalStudentDebt(),
+            'totalTeacherPayable' => $this->dashboard->totalTeacherPayable(),
             'upcomingWindow' => SettingsService::upcomingWindowDays(),
         ]);
     }

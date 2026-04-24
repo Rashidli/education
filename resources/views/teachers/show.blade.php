@@ -16,11 +16,42 @@
         </div>
         <div class="flex gap-2">
             <a href="{{ route('teachers.index') }}" class="btn btn--ghost">← Geri</a>
+            @can('payouts.view')
+                <a href="{{ route('teachers.payouts', $teacher) }}" class="btn btn--outline">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    Ödənişlər / Balans
+                </a>
+            @endcan
             <a href="{{ route('teachers.edit', $teacher) }}" class="btn btn--primary">Redaktə et</a>
         </div>
     </div>
 
     @include('partials.flash')
+
+    @can('payouts.view')
+    <div class="card mb-3" style="margin-bottom:1rem">
+        <div class="balance-bar">
+            <div class="balance-bar__item">
+                <div class="balance-bar__label">Ümumi qazanılıb</div>
+                <div class="balance-bar__value">{{ number_format($balance['earned'], 2) }} ₼</div>
+            </div>
+            <div class="balance-bar__item">
+                <div class="balance-bar__label">Ödənilib</div>
+                <div class="balance-bar__value">{{ number_format($balance['paid'], 2) }} ₼</div>
+            </div>
+            <div class="balance-bar__item">
+                <div class="balance-bar__label">
+                    {{ $balance['balance'] > 0 ? 'Verilməli' : ($balance['balance'] < 0 ? 'Artıq verilib' : 'Tarazlıq') }}
+                </div>
+                <div class="balance-bar__value {{ $balance['balance'] > 0 ? 'balance-bar__value--owes' : ($balance['balance'] < 0 ? 'balance-bar__value--credit' : '') }}">
+                    {{ number_format(abs($balance['balance']), 2) }} ₼
+                </div>
+            </div>
+        </div>
+    </div>
+    @endcan
 
     <div class="grid-stats" style="grid-template-columns: repeat(3, 1fr)">
         <div class="card stat">

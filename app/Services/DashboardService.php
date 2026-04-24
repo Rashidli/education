@@ -6,12 +6,18 @@ use App\Models\Enrollment;
 use App\Models\Group;
 use App\Models\Payment;
 use App\Models\Student;
+use App\Models\Teacher;
+use App\Models\TeacherPayout;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class DashboardService
 {
-    public function __construct(private EarningsService $earnings) {}
+    public function __construct(
+        private EarningsService $earnings,
+        private StudentLedgerService $studentLedger,
+        private TeacherPayoutService $teacherPayouts,
+    ) {}
 
     public function activeStudentsCount(): int
     {
@@ -81,5 +87,49 @@ class DashboardService
             ->orderByDesc('students_count')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Bütün aktiv tələbələrin cəmi borcu.
+     */
+    public function totalStudentDebt(): float
+    {
+        $total = 0;
+        Student::where('is_active', true)
+            ->with(['enrollments.group', 'enrollments.payments'])
+            ->chunk(100, function ($chunk) use (&$total) {
+                foreach ($chunk as $student) {
+                    $total += $this->studentLedger->totalBalanceForStudent($student);
+                }
+            });
+
+        return round($total, 2);
+    }
+
+    /**
+     * Müəllimlərə ödənilməli cəmi qalıq (bütün tarix boyu).
+     */
+    public function totalTeacherPayable(): float
+    {
+        $total = 0;
+        foreach (Teacher::where('is_active', true)->get() as $t) {
+            $total += max(0, $this->teacherPayouts->balance($t)['balance']);
+        }
+
+        return round($total, 2);
+    }
+
+    /**
+     * Dashboard üçün müəllim balans cədvəli: hər müəllim — qazanılıb, ödənilib, qalıq.
+     */
+    public function teacherBalances(): Collection
+    {
+        return Teacher::where('is_active', true)->get()
+            ->map(fn (Teacher $t) => [
+                'teacher' => $t,
+                'balance' => $this->teacherPayouts->balance($t),
+            ])
+            ->sortByDesc(fn ($row) => $row['balance']['balance'])
+            ->values();
     }
 }

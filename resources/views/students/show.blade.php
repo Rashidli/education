@@ -28,11 +28,34 @@
 
     @include('partials.flash')
 
+    @if ($student->enrollments->isNotEmpty())
+        <div class="card mb-3" style="margin-bottom:1rem">
+            <div class="balance-bar">
+                <div class="balance-bar__item">
+                    <div class="balance-bar__label">Gözlənilən</div>
+                    <div class="balance-bar__value">{{ number_format($totalExpected, 2) }} ₼</div>
+                </div>
+                <div class="balance-bar__item">
+                    <div class="balance-bar__label">Ödənilib</div>
+                    <div class="balance-bar__value">{{ number_format($totalPaid, 2) }} ₼</div>
+                </div>
+                <div class="balance-bar__item">
+                    <div class="balance-bar__label">
+                        {{ $totalBalance > 0 ? 'Borc' : ($totalBalance < 0 ? 'Artıq ödəyib' : 'Tarazlıq') }}
+                    </div>
+                    <div class="balance-bar__value {{ $totalBalance > 0 ? 'balance-bar__value--owes' : ($totalBalance < 0 ? 'balance-bar__value--credit' : '') }}">
+                        {{ number_format(abs($totalBalance), 2) }} ₼
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="card">
         <div class="card__header">
             <div>
-                <div class="card__title">Qruplar və ödəniş tarixçəsi</div>
-                <div class="card__description">Hər qrupda qoşulma tarixi, ilk ay pro-rata, növbəti ödəniş və ödənişlər</div>
+                <div class="card__title">Qruplar və ödəniş ledger-i</div>
+                <div class="card__description">Hər ay üçün gözlənilən və ödənilmiş məbləğ. Rənglər statusu göstərir.</div>
             </div>
         </div>
         <div class="card__body card__body--flush">
@@ -95,34 +118,70 @@
                             </div>
                         </div>
 
-                        @if ($enrollment->payments->isNotEmpty())
-                            <div class="table-wrap mt-3">
-                                <table class="table" style="font-size:0.75rem">
-                                    <thead>
-                                        <tr>
-                                            <th>Tarix</th>
-                                            <th>Dövr</th>
-                                            <th>Məbləğ</th>
-                                            <th>Üsul</th>
-                                            <th>Qeyd</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($enrollment->payments as $payment)
-                                            <tr>
-                                                <td>{{ $payment->paid_at->format('d.m.Y') }}</td>
-                                                <td>
-                                                    {{ $payment->period_month->translatedFormat('F Y') }}
-                                                    @if ($payment->is_prorata) <span class="badge badge--info">pro-rata</span> @endif
-                                                </td>
-                                                <td>{{ number_format($payment->amount, 2) }} ₼</td>
-                                                <td class="text-muted">{{ $payment->method ?? '—' }}</td>
-                                                <td class="text-muted">{{ $payment->notes ?? '—' }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                        @php $ledger = $ledgers[$enrollment->id] ?? null; @endphp
+                        @if ($ledger && $ledger['periods']->isNotEmpty())
+                            <div class="mt-3" style="border-top:1px solid var(--border);margin-top:0.75rem;padding-top:0.75rem">
+                                <div class="flex items-center gap-4" style="flex-wrap:wrap;margin-bottom:0.5rem">
+                                    <span class="text-xs text-muted">
+                                        Bu qrup üçün: <strong>{{ number_format($ledger['total_expected'], 2) }} ₼</strong> gözlənilib,
+                                        <strong>{{ number_format($ledger['total_paid'], 2) }} ₼</strong> ödənilib,
+                                        <strong style="color:{{ $ledger['balance'] > 0 ? 'var(--destructive)' : ($ledger['balance'] < 0 ? 'var(--success)' : 'var(--foreground)') }}">
+                                            {{ $ledger['balance'] > 0 ? 'borc' : ($ledger['balance'] < 0 ? 'artıq' : 'tarazlıq') }}
+                                            {{ number_format(abs($ledger['balance']), 2) }} ₼
+                                        </strong>
+                                    </span>
+                                </div>
                             </div>
+                            <div class="ledger-grid" style="padding:0.75rem 0">
+                                @foreach ($ledger['periods'] as $p)
+                                    <div class="ledger-cell ledger-cell--{{ $p['status'] }}">
+                                        <div class="ledger-cell__status"></div>
+                                        <div class="ledger-cell__month">
+                                            {{ $p['month']->translatedFormat('F Y') }}
+                                            @if ($p['is_prorata']) · pro-rata @endif
+                                        </div>
+                                        <div class="ledger-cell__expected">
+                                            Gözlənilən: {{ number_format($p['expected'], 2) }} ₼
+                                        </div>
+                                        <div class="ledger-cell__paid">
+                                            {{ number_format($p['paid'], 2) }} ₼
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        @if ($enrollment->payments->isNotEmpty())
+                            <details style="margin-top:0.5rem">
+                                <summary style="cursor:pointer;font-size:0.75rem;color:var(--muted-foreground)">Bütün ödənişləri göstər ({{ $enrollment->payments->count() }})</summary>
+                                <div class="table-wrap mt-2">
+                                    <table class="table" style="font-size:0.75rem">
+                                        <thead>
+                                            <tr>
+                                                <th>Tarix</th>
+                                                <th>Dövr</th>
+                                                <th>Məbləğ</th>
+                                                <th>Üsul</th>
+                                                <th>Qeyd</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($enrollment->payments as $payment)
+                                                <tr>
+                                                    <td>{{ $payment->paid_at->format('d.m.Y') }}</td>
+                                                    <td>
+                                                        {{ $payment->period_month->translatedFormat('F Y') }}
+                                                        @if ($payment->is_prorata) <span class="badge badge--info">pro-rata</span> @endif
+                                                    </td>
+                                                    <td>{{ number_format($payment->amount, 2) }} ₼</td>
+                                                    <td class="text-muted">{{ $payment->method ?? '—' }}</td>
+                                                    <td class="text-muted">{{ $payment->notes ?? '—' }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </details>
                         @endif
                     </div>
                 @endforeach

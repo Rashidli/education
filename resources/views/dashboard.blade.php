@@ -199,50 +199,96 @@
         </div>
     </div>
 
-    {{-- Teacher earnings --}}
+    {{-- Balans xəbərdarlığı --}}
+    @if ($totalStudentDebt > 0 || $totalTeacherPayable > 0)
+    <div class="grid-showcase mb-3" style="margin-bottom:1rem">
+        @if ($totalStudentDebt > 0)
+        <div class="card">
+            <div class="card__body">
+                <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:0.05em">Tələbələrdən yığılmalı</div>
+                <div style="font-size:1.5rem;font-weight:700;color:var(--destructive);margin-top:4px">
+                    {{ number_format($totalStudentDebt, 2) }} ₼
+                </div>
+                <div class="text-xs text-muted mt-1">Bütün tələbələrin cəmi borcu (gözlənilən − ödənilmiş)</div>
+            </div>
+        </div>
+        @endif
+
+        @if ($totalTeacherPayable > 0)
+        <div class="card">
+            <div class="card__body">
+                <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:0.05em">Müəllimlərə veriləsi</div>
+                <div style="font-size:1.5rem;font-weight:700;color:var(--warning);margin-top:4px">
+                    {{ number_format($totalTeacherPayable, 2) }} ₼
+                </div>
+                <div class="text-xs text-muted mt-1">Bütün müəllimlərin cəmi qalığı (qazanılıb − ödənilib)</div>
+            </div>
+        </div>
+        @endif
+    </div>
+    @endif
+
+    {{-- Teacher balances --}}
     <div class="card">
         <div class="card__header">
             <div>
-                <div class="card__title">Müəllim qazancı</div>
-                <div class="card__description">Bu ay üçün komissiya (real daxil olmuş ödənişlər × müəllim komissiya faizi)</div>
+                <div class="card__title">Müəllim balansları</div>
+                <div class="card__description">Hər müəllim üçün qazanılıb / ödənilib / qalıq — ümumi tarix boyu</div>
             </div>
             <a href="{{ route('teachers.index') }}" class="btn btn--ghost btn--sm">Bütün müəllimlər</a>
         </div>
         <div class="card__body card__body--flush">
-            <div class="table-wrap">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Müəllim</th>
-                            <th>Növ</th>
-                            <th>Komissiya</th>
-                            <th style="text-align:right">Bu ay qazanc</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($teacherSummary as $row)
+            @if ($teacherBalances->isEmpty())
+                <div class="empty"><div class="empty__title">Aktiv müəllim yoxdur</div></div>
+            @else
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td>
-                                    <div class="table__user">
-                                        <div class="avatar avatar--sm">{{ mb_strtoupper(mb_substr($row['teacher']->name, 0, 2)) }}</div>
-                                        <div>
-                                            <div class="table__user-name">{{ $row['teacher']->name }}</div>
-                                            <div class="table__user-email">{{ $row['teacher']->email }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge badge--{{ $row['teacher']->type === 'foreign' ? 'info' : 'secondary' }}">
-                                        {{ $row['teacher']->typeLabel() }}
-                                    </span>
-                                </td>
-                                <td class="text-muted">{{ rtrim(rtrim(number_format($row['teacher']->commission_rate, 2), '0'), '.') }}%</td>
-                                <td style="text-align:right;font-weight:600">{{ number_format($row['earnings'], 2) }} ₼</td>
+                                <th>Müəllim</th>
+                                <th>Növ</th>
+                                <th>Komissiya</th>
+                                <th>Qazanılıb</th>
+                                <th>Ödənilib</th>
+                                <th style="text-align:right">Qalıq</th>
+                                <th></th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            @foreach ($teacherBalances as $row)
+                                @php $b = $row['balance']; @endphp
+                                <tr>
+                                    <td>
+                                        <div class="table__user">
+                                            <div class="avatar avatar--sm">{{ mb_strtoupper(mb_substr($row['teacher']->name, 0, 2)) }}</div>
+                                            <div>
+                                                <div class="table__user-name">{{ $row['teacher']->name }}</div>
+                                                <div class="table__user-email">{{ $row['teacher']->email }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge--{{ $row['teacher']->type === 'foreign' ? 'info' : 'secondary' }}">
+                                            {{ $row['teacher']->typeLabel() }}
+                                        </span>
+                                    </td>
+                                    <td class="text-muted">{{ rtrim(rtrim(number_format($row['teacher']->commission_rate, 2), '0'), '.') }}%</td>
+                                    <td>{{ number_format($b['earned'], 2) }} ₼</td>
+                                    <td class="text-muted">{{ number_format($b['paid'], 2) }} ₼</td>
+                                    <td style="text-align:right;font-weight:600;color:{{ $b['balance'] > 0 ? 'var(--destructive)' : ($b['balance'] < 0 ? 'var(--success)' : 'inherit') }}">
+                                        {{ number_format($b['balance'], 2) }} ₼
+                                    </td>
+                                    <td style="text-align:right">
+                                        @can('payouts.view')
+                                            <a href="{{ route('teachers.payouts', $row['teacher']) }}" class="btn btn--ghost btn--sm">Payout</a>
+                                        @endcan
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
         </div>
     </div>
 @endsection

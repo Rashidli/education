@@ -28,6 +28,10 @@ class RolesAndPermissionsSeeder extends Seeder
         'payments.create' => 'Ödəniş qeydə al',
         'payments.delete' => 'Ödənişi sil',
 
+        'payouts.view' => 'Müəllim ödənişlərinə bax',
+        'payouts.create' => 'Müəllimə ödəniş et',
+        'payouts.delete' => 'Müəllim ödənişini sil',
+
         'reports.view' => 'Hesabatlara bax',
         'reports.export' => 'Hesabat ixrac et',
 
@@ -57,6 +61,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'teachers.view', 'teachers.manage',
             'enrollments.manage',
             'payments.view', 'payments.create', 'payments.delete',
+            'payouts.view', 'payouts.create', 'payouts.delete',
             'reports.view', 'reports.export',
         ]);
 
@@ -66,6 +71,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'groups.view',
             'teachers.view',
             'payments.view', 'payments.create',
+            'payouts.view',
             'reports.view',
         ]);
     }

@@ -10,6 +10,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\TeacherPayoutController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -75,6 +76,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/students/{student}/enrollments', [EnrollmentController::class, 'store'])->name('students.enrollments.store');
         Route::delete('/students/{student}/enrollments/{enrollment}', [EnrollmentController::class, 'destroy'])->name('students.enrollments.destroy');
     });
+
+    // Teacher payouts
+    Route::get('/teachers/{teacher}/payouts', [TeacherPayoutController::class, 'show'])
+        ->middleware('can:payouts.view')->whereNumber('teacher')->name('teachers.payouts');
+    Route::post('/teachers/{teacher}/payouts', [TeacherPayoutController::class, 'store'])
+        ->middleware('can:payouts.create')->whereNumber('teacher')->name('teachers.payouts.store');
+    Route::delete('/teachers/{teacher}/payouts/{payout}', [TeacherPayoutController::class, 'destroy'])
+        ->middleware('can:payouts.delete')->whereNumber('teacher')->name('teachers.payouts.destroy');
 
     // Payments
     Route::get('/payments', [PaymentController::class, 'index'])
